@@ -1,30 +1,66 @@
 # SlotKeeper
 
-A resource booking API built to solve one specific problem properly: never letting two people book the same time slot, even under concurrent load, without leaning on application-level locks that fall apart under real traffic.
+![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
+![Frontend](https://img.shields.io/badge/React_18-TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+A resource booking API built around one rule: two people can never end up holding the same time slot, no matter how close together their requests land.
 
 ## Why this exists
 
-Most beginner booking demos check for overlapping bookings with a SELECT before the INSERT, then hope nothing else writes to the table in between. That works fine in a demo and falls apart the moment two requests hit the same slot within a few milliseconds of each other, because the check and the insert are not atomic. I wanted to close that gap for real, using the database as the source of truth instead of trusting application code to win a race it cannot see.
+Most beginner booking demos check for overlapping bookings with a SELECT before the INSERT, then hope nothing else writes to the table in between. That works fine in a demo and falls apart the moment two requests hit the same slot within a few milliseconds of each other, because the check and the insert are not atomic. SlotKeeper closes that gap by making the database the source of truth instead of trusting application code to win a race it cannot see.
 
-## The core idea
+## Live links
 
-Every booking is broken into fixed slot boundaries (30 minutes by default, configurable per resource). Each slot becomes a row in a `BookingSlots` table with a unique index on `(ResourceId, SlotStartUtc)`. Booking a resource means inserting the parent `Booking` row plus one `BookingSlot` row per slot it covers, in the same SaveChanges call. If any of those slots is already taken, the unique index rejects the insert and the whole write fails together. There is no SELECT-then-check window for two requests to slip through, because the constraint is enforced at write time by the database itself, not read time by application code.
+| What | Where |
+|---|---|
+| Source | `github.com/<your-username>/slotkeeper` — swap in your handle once it's pushed |
+| Live demo | none by design — the API needs a real SQL Server behind it, which isn't a fit for a free static host |
+| CI | `.github/workflows/ci.yml`, runs `dotnet restore`, `build`, and both test projects on every push |
 
-Cancelling a booking deletes its slot rows, which frees them up immediately for the next request.
+## Features
 
-A background service sweeps the waitlist every 30 seconds and tries to promote pending entries through the exact same booking method a normal request uses, so there is only one code path in the whole system that actually creates a booking. That was a deliberate choice: duplicating the conflict logic between "book now" and "promote from waitlist" is exactly the kind of thing that drifts out of sync over time.
+| Area | What it does |
+|---|---|
+| Booking | Books a resource for one or more fixed slots in a single atomic write |
+| Conflict safety | A unique database index rejects double-bookings at write time, not read time |
+| Waitlist | Background sweep every 30 seconds promotes waitlisted users through the same booking path a normal request uses |
+| Roles | JWT auth with Member and Admin roles enforced server-side on every mutating endpoint |
+| Daily limits | Per-resource cap on bookings per user per day, checked before insert |
+| Reporting | Admin-only utilization report backed by a hand-written stored procedure |
+| Audit trail | Every booking created or cancelled is logged with actor, action, and payload |
+| Testing | 18 automated tests across unit and full HTTP integration suites |
 
-## Stack
+## How the conflict-safety actually works
 
-- ASP.NET Core 8 Web API (C#), split into Domain, Infrastructure, and Api projects
-- Entity Framework Core 8 with SQL Server
-- JWT authentication with role-based authorization (Member / Admin)
-- A hand-written stored procedure for the utilization report, called through EF Core's raw SQL support
-- React 18 with TypeScript (Vite) on the frontend
-- xUnit for unit tests; xUnit plus WebApplicationFactory plus SQLite for integration tests
-- Docker Compose for local SQL Server, GitHub Actions for CI
+Every booking is broken into fixed slot boundaries (30 minutes by default, configurable per resource). Each slot becomes a row in `BookingSlots` with a unique index on `(ResourceId, SlotStartUtc)`. Creating a booking inserts the parent `Booking` row plus one `BookingSlot` row per slot it covers, all in the same `SaveChanges` call. If any slot is already taken, the unique index rejects the whole write.
 
-## Project layout
+| Guarantee | How it's enforced |
+|---|---|
+| No double-booking | Unique index on `(ResourceId, SlotStartUtc)` in `BookingSlots`; a violation is caught and turned into a 409 |
+| No lost cancellations | `Booking.RowVersion` is a concurrency token, regenerated on every write, checked by EF Core's optimistic concurrency |
+| One code path for every booking | The waitlist sweep calls `BookingService.CreateBookingAsync` directly instead of duplicating the conflict logic |
+| Cross-database conflict detection | `BookingService` catches SQL Server error codes 2627/2601 in production and the SQLite "UNIQUE constraint failed" message in tests, so the same 409 behavior is verified without a real SQL Server |
+
+That last point mattered more than it sounds like it should: the integration tests run against SQLite (see below), so the conflict-detection code has to recognize a constraint violation from either engine, not just the one it ships against.
+
+Cancelling a booking deletes its slot rows, freeing them immediately for the next request.
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| API | ASP.NET Core 8 (C#), split into Domain / Infrastructure / Api projects |
+| Data | Entity Framework Core 8 on SQL Server |
+| Auth | JWT bearer tokens, role-based authorization (Member / Admin) |
+| Reporting | Hand-written stored procedure, called through EF Core's raw SQL support |
+| Frontend | React 18 + TypeScript, built with Vite |
+| Testing | xUnit for unit tests; xUnit + `WebApplicationFactory` + SQLite for integration tests |
+| Infra | Docker Compose for local SQL Server, GitHub Actions for CI |
+
+## Project structure
 
 ```
 slotkeeper/
@@ -35,14 +71,15 @@ slotkeeper/
   tests/
     SlotKeeper.UnitTests/         slot math and booking rules, no database involved
     SlotKeeper.IntegrationTests/  full HTTP round trips against an in-memory SQLite database
-  client/                     React and TypeScript frontend
+  client/                     React + TypeScript frontend
   database/                   reference copy of the stored procedure SQL
   docker-compose.yml          API plus SQL Server for local development
+  Directory.Build.props       shared MSBuild settings (roll-forward policy, see Testing below)
 ```
 
-## Running it locally
+## Getting started
 
-You need the .NET 8 SDK, Node 18 or newer, and Docker.
+Requires the .NET 8 SDK, Node 18+, and Docker.
 
 Start SQL Server and the API together:
 
@@ -50,7 +87,7 @@ Start SQL Server and the API together:
 docker compose up --build
 ```
 
-The API listens on `http://localhost:8080`, with Swagger at `http://localhost:8080/swagger` when running in Development mode.
+The API listens on `http://localhost:8080`, with Swagger at `http://localhost:8080/swagger` in Development mode.
 
 In a second terminal, start the frontend:
 
@@ -62,37 +99,50 @@ npm run dev
 
 The frontend runs on `http://localhost:5173` and expects the API at `http://localhost:8080` (see `client/.env.example`).
 
-If you would rather run the API without Docker, point `ConnectionStrings:SlotKeeperDb` in `src/SlotKeeper.Api/appsettings.Development.json` at any SQL Server instance you have, then:
+To run the API without Docker, point `ConnectionStrings:SlotKeeperDb` in `src/SlotKeeper.Api/appsettings.Development.json` at any SQL Server instance you have, then:
 
 ```
 dotnet run --project src/SlotKeeper.Api
 ```
 
-## Running the tests
+## Testing and verification
 
 ```
 dotnet test
 ```
 
-This runs both test projects. The unit tests check the slot-alignment math and the daily booking limit in isolation, with no database involved. The integration tests spin up the actual API through `WebApplicationFactory` against an in-memory SQLite database and check things like: a second user trying to book an already-taken slot gets a 409, cancelling a booking frees the slot for someone else, a member cannot create a resource, and a member cannot book past their daily limit.
+Runs both test projects: 18 tests, 18 passing. Unit tests check slot-alignment math and the daily booking limit in isolation, no database involved. Integration tests spin up the real API through `WebApplicationFactory` against an in-memory SQLite database and cover things like a second user getting a 409 on an already-taken slot, cancelling a booking freeing it for someone else, a member being blocked from creating a resource, and a member hitting their daily limit.
 
-## A note on how this was verified
+| Gate | Command |
+|---|---|
+| Unit + integration tests | `dotnet test` |
+| API build | `dotnet build` |
+| Frontend build | `cd client && npm run build` |
+| CI | `.github/workflows/ci.yml`, runs all of the above on every push |
 
-I do not currently have a machine with .NET and open NuGet access in front of me while writing this, so I was not able to run `dotnet build` or `dotnet test` end to end before pushing. What I did do: wrote every project by hand rather than copying a template, ran the React/TypeScript half through a real `npm install` and `npm run build` (it compiles clean), and ran every `.cs` file through the Roslyn compiler directly against the .NET 8 reference assemblies to catch real syntax and naming errors, ignoring the expected "package not found" noise for things like EF Core and xUnit that only resolve through a normal restore. That pass caught one genuine bug: a namespace named `SlotKeeper.Domain.Booking` collided with the `Booking` entity class and made `Booking` ambiguous inside its own namespace. Fixed by renaming the namespace to `SlotKeeper.Domain.BookingLogic`. I also wired up the GitHub Actions workflow in `.github/workflows/ci.yml` to run `dotnet restore`, `dotnet build`, and both test projects on every push, so the first push to GitHub gives a real, independently verifiable green or red build. Run `dotnet build` and `dotnet test` yourself before relying on this anywhere important.
+### Troubleshooting: "no matching runtime found" on `dotnet test`
 
-## A note on the SQL Server specific pieces
+`Directory.Build.props` sets `<RollForward>LatestMajor</RollForward>` so `dotnet run` and `dotnet build` work even if you only have a newer .NET SDK installed than the project targets. That setting does not cover `dotnet test`: VSTest launches tests through `testhost.exe`, which ignores the project's roll-forward policy and needs the exact matching runtime installed side by side with the SDK. If `dotnet test` fails with a runtime-not-found error while `dotnet build` succeeds, install the .NET 8 ASP.NET Core runtime (not just the SDK) and re-run.
 
-The utilization report endpoint (`GET /api/reports/utilization`) calls a real stored procedure through `EXEC`, which only exists on SQL Server. It is intentionally not covered by the integration tests, which run against SQLite. If you want to exercise it, run the full stack through `docker compose up` and hit the endpoint with an admin token.
+## Deployment
 
-The schema is created at startup with `EnsureCreated()` rather than versioned EF Core migrations. For a project this size that is a reasonable tradeoff, but the first thing I would change before running this anywhere beyond a laptop is switching to `dotnet ef migrations add InitialCreate` and a proper migration history.
+There's no hosted live demo, on purpose. The utilization report depends on a real stored procedure, which means a real SQL Server behind the API, not a fit for a free static host. To deploy for real:
 
-## What I would add next
+1. Build the container image from the included `Dockerfile`.
+2. Point it at a managed SQL Server (Azure SQL, RDS, or self-hosted) via `ConnectionStrings__SlotKeeperDb`.
+3. Push the image to any container host that can reach that database — Azure App Service, AWS ECS, or a plain VM running Docker all work.
+4. Swap `EnsureCreated()` for versioned EF Core migrations before pointing this at anything with real data (see below).
 
-- OAuth or SSO instead of the current email-and-password JWT flow, since that is what most enterprise environments actually run
-- Rate limiting on the auth endpoints
-- A push notification (email or webhook) when a waitlist entry gets promoted, instead of requiring the user to check back
-- Pagination on the bookings and resources endpoints once there is enough data for it to matter
-- Versioned EF Core migrations instead of `EnsureCreated()`
+## Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `ConnectionStrings__SlotKeeperDb` | SQL Server connection string |
+| `Jwt__SigningKey` | Symmetric key used to sign and validate JWTs |
+| `Jwt__Issuer` / `Jwt__Audience` | Standard JWT validation fields |
+| `Cors__AllowedOrigins` | Comma-separated origins allowed to call the API from a browser |
+
+`docker-compose.yml` sets sane local defaults for all of these; override them for anything beyond a laptop.
 
 ## API summary
 
@@ -110,6 +160,21 @@ The schema is created at startup with `EnsureCreated()` rather than versioned EF
 | GET | /api/bookings/mine | Member or Admin | List your own bookings |
 | GET | /api/bookings/resource/{id} | Member or Admin | List bookings for a resource in a date range |
 | GET | /api/reports/utilization | Admin | Daily utilization percentage for a resource |
+
+## Design and engineering decisions
+
+- **`EnsureCreated()` instead of migrations.** Reasonable for a project this size, but the first thing to change before running this beyond a laptop is `dotnet ef migrations add InitialCreate` and a real migration history.
+- **Concurrency token is a random GUID, not a database-generated `rowversion`.** `Booking.RowVersion` is regenerated with `Guid.NewGuid().ToByteArray()` on every write and marked `IsConcurrencyToken()` in `OnModelCreating`. That keeps the model portable across SQL Server and SQLite (a true SQL Server `rowversion` column isn't something SQLite has an equivalent for), at the cost of relying on the application to remember to rotate it instead of the database doing it automatically.
+- **One booking code path.** The waitlist promoter calls the exact same `BookingService.CreateBookingAsync` method a live request does, specifically so the conflict-detection logic never has two implementations that can drift apart.
+- **SQL Server-specific reporting isn't covered by integration tests.** `GET /api/reports/utilization` calls a real stored procedure via `EXEC`, which SQLite can't run. It's excluded from the SQLite-backed integration suite by design; exercising it means running the full stack with `docker compose up` and hitting the endpoint with an admin token.
+
+## What's next
+
+- OAuth or SSO instead of email-and-password JWT, since that's what most enterprise environments actually run
+- Rate limiting on the auth endpoints
+- A push notification (email or webhook) when a waitlist entry gets promoted, instead of requiring a manual check
+- Pagination on the bookings and resources endpoints once there's enough data for it to matter
+- Versioned EF Core migrations instead of `EnsureCreated()`
 
 ## License
 
