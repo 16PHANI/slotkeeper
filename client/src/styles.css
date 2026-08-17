@@ -1,0 +1,23 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #1e293b; }
+.navbar .brand { color: #38bdf8; font-weight: 700; text-decoration: none; font-size: 1.25rem; }
+.nav-links { display: flex; gap: 1rem; align-items: center; }
+.nav-links a { color: #e2e8f0; text-decoration: none; }
+.nav-links button { background: #334155; color: #e2e8f0; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; }
+.user-pill { background: #0369a1; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+.content { flex: 1; padding: 2rem; max-width: 960px; margin: 0 auto; width: 100%; }
+.auth-form, .booking-form, .admin-form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 420px; background: #1e293b; padding: 1.5rem; border-radius: 10px; margin-top: 1rem; }
+.auth-form label, .booking-form label, .admin-form label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; }
+input { padding: 0.5rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; }
+button { padding: 0.5rem 1rem; border-radius: 6px; border: none; background: #38bdf8; color: #0f172a; font-weight: 600; cursor: pointer; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.form-error { color: #f87171; }
+.form-success { color: #4ade80; }
+.resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.resource-card { background: #1e293b; padding: 1rem; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
+.resource-card.selected { border-color: #38bdf8; }
+.muted { color: #94a3b8; font-size: 0.85rem; }
+.bookings-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.bookings-table th, .bookings-table td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #334155; }

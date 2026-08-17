@@ -1,0 +1,15 @@
+D:\slotkeeper\src\SlotKeeper.Infrastructure\bin\Debug\net8.0\SlotKeeper.Infrastructure.deps.json
+D:\slotkeeper\src\SlotKeeper.Infrastructure\bin\Debug\net8.0\SlotKeeper.Infrastructure.dll
+D:\slotkeeper\src\SlotKeeper.Infrastructure\bin\Debug\net8.0\SlotKeeper.Infrastructure.pdb
+D:\slotkeeper\src\SlotKeeper.Infrastructure\bin\Debug\net8.0\SlotKeeper.Domain.dll
+D:\slotkeeper\src\SlotKeeper.Infrastructure\bin\Debug\net8.0\SlotKeeper.Domain.pdb
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.csproj.AssemblyReference.cache
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.AssemblyInfoInputs.cache
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.AssemblyInfo.cs
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.csproj.CoreCompileInputs.cache
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeep.72784385.Up2Date
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.dll
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\refint\SlotKeeper.Infrastructure.dll
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\SlotKeeper.Infrastructure.pdb
+D:\slotkeeper\src\SlotKeeper.Infrastructure\obj\Debug\net8.0\ref\SlotKeeper.Infrastructure.dll

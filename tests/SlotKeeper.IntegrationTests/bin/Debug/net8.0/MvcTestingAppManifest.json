@@ -1,0 +1,5 @@
+{
+  "SlotKeeper.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\slotkeeper\\src\\SlotKeeper.Api",
+  "SlotKeeper.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\slotkeeper\\src\\SlotKeeper.Domain",
+  "SlotKeeper.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "D:\\slotkeeper\\src\\SlotKeeper.Infrastructure"
+}

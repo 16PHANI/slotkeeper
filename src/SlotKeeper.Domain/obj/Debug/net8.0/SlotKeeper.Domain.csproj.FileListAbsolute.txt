@@ -1,0 +1,11 @@
+D:\slotkeeper\src\SlotKeeper.Domain\bin\Debug\net8.0\SlotKeeper.Domain.deps.json
+D:\slotkeeper\src\SlotKeeper.Domain\bin\Debug\net8.0\SlotKeeper.Domain.dll
+D:\slotkeeper\src\SlotKeeper.Domain\bin\Debug\net8.0\SlotKeeper.Domain.pdb
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.AssemblyInfoInputs.cache
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.AssemblyInfo.cs
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.csproj.CoreCompileInputs.cache
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.dll
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\refint\SlotKeeper.Domain.dll
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\SlotKeeper.Domain.pdb
+D:\slotkeeper\src\SlotKeeper.Domain\obj\Debug\net8.0\ref\SlotKeeper.Domain.dll
