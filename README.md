@@ -1,6 +1,6 @@
 # SlotKeeper
 
-![CI](https://github.com/16PHANI/slotkeeper/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/16PHANI/slotkeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/16PHANI/slotkeeper/actions/workflows/ci.yml)
 ![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
 ![Frontend](https://img.shields.io/badge/React_18-TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
