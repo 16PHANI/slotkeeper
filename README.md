@@ -6,8 +6,6 @@
 ![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-**Repo:** [github.com/16PHANI/slotkeeper](https://github.com/16PHANI/slotkeeper)
-
 A resource booking API built around one rule: two people can never end up holding the same time slot, no matter how close together their requests land. The conflict check isn't application code hoping nothing races it — it's a database constraint that makes the bad outcome structurally impossible.
 
 ## Engineering highlights
